@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Quản lý Phòng trọ - ERD Database</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Hiệu ứng chuyển cảnh */
+        .fade-in { animation: fadeIn 0.25s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased selection:bg-indigo-100 selection:text-indigo-700">
+
+    <!-- ==================== THÔNG BÁO TOAST & XÁC NHẬN MODAL ==================== -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
+    <!-- Modal Xác nhận (Thay thế confirm()) -->
+    <div id="confirm-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 fade-in border border-slate-100">
+            <div class="flex items-center gap-3 text-amber-600 mb-3">
+                <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                </div>
+                <h3 id="confirm-title" class="text-lg font-bold text-slate-900">Xác nhận thao tác</h3>
+            </div>
+            <p id="confirm-message" class="text-slate-600 text-sm mb-6 leading-relaxed"></p>
+            <div class="flex justify-end gap-3">
+                <button id="confirm-cancel-btn" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition">Hủy bỏ</button>
+                <button id="confirm-ok-btn" class="px-4 py-2 rounded-xl text-sm font-medium bg-rose-600 text-white hover:bg-rose-700 shadow-sm transition">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MÀN HÌNH ĐĂNG NHẬP (LOGIN) ==================== -->
+    <div id="login-screen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden fade-in border border-slate-200/20">
+            <div class="bg-indigo-600 p-8 text-white text-center relative overflow-hidden">
+                <div class="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-xl"></div>
+                <div class="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner">
+                    <i class="fa-solid fa-building-user text-3xl text-white"></i>
+                </div>
+                <h1 class="text-2xl font-bold tracking-tight">Quản Lý Phòng Trọ</h1>
+                <p class="text-indigo-200 text-sm mt-1">Hệ thống CSDL Quan hệ 11 Bảng</p>
+            </div>
+            
+            <form id="login-form" class="p-8 space-y-5">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Tên đăng nhập</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                            <i class="fa-solid fa-user"></i>
+                        </span>
+                        <input type="text" id="login-username" value="admin" required
+                            class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition"
+                            placeholder="Nhập tên đăng nhập">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Mật khẩu</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                            <i class="fa-solid fa-lock"></i>
+                        </span>
+                        <input type="password" id="login-password" value="123456" required
+                            class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition"
+                            placeholder="Nhập mật khẩu">
+                    </div>
+                </div>
+
+                <!-- Gợi ý tài khoản mặc định -->
+                <div class="bg-indigo-50/80 border border-indigo-100 rounded-xl p-3.5 text-xs text-indigo-800 space-y-1">
+                    <div class="font-semibold flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-info text-indigo-600"></i> Tài khoản mặc định hệ thống:
+                    </div>
+                    <div class="flex justify-between items-center pt-1">
+                        <span>Quản trị viên: <code class="bg-white px-1.5 py-0.5 rounded font-mono font-bold">admin</code> / <code class="bg-white px-1.5 py-0.5 rounded font-mono font-bold">123456</code></span>
+                        <button type="button" onclick="fillAccount('admin', '123456')" class="text-indigo-600 hover:underline font-medium">Điền nhanh</button>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span>Nhân viên: <code class="bg-white px-1.5 py-0.5 rounded font-mono font-bold">nhanvien</code> / <code class="bg-white px-1.5 py-0.5 rounded font-mono font-bold">123456</code></span>
+                        <button type="button" onclick="fillAccount('nhanvien', '123456')" class="text-indigo-600 hover:underline font-medium">Điền nhanh</button>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-md shadow-indigo-200 transition flex items-center justify-center gap-2">
+                    <span>Đăng nhập hệ thống</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== GIAO DIỆN CHÍNH (MAIN APP) ==================== -->
+    <div id="main-app" class="hidden min-h-screen flex flex-col lg:flex-row">
+        
+        <!-- Mobile Header -->
+        <header class="lg:hidden bg-slate-900 text-white p-4 flex items-center justify-between sticky top-0 z-30 shadow-md">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
+                    <i class="fa-solid fa-building-user text-sm"></i>
+                </div>
+                <span class="font-bold text-base">QL Phòng Trọ ERD</span>
+            </div>
+            <button id="mobile-menu-btn" class="p-2 rounded-lg bg-slate-800 text-slate-200 hover:text-white">
+                <i class="fa-solid fa-bars text-lg"></i>
+            </button>
+        </header>
+
+        <!-- Sidebar Backdrop (Mobile) -->
+        <div id="sidebar-backdrop" class="fixed inset-0 bg-slate-900/60 z-30 hidden lg:hidden" onclick="toggleSidebar()"></div>
+
+        <!-- Sidebar Navigation -->
+        <aside id="sidebar" class="fixed lg:sticky top-0 left-0 z-40 h-screen w-72 bg-slate-900 text-slate-300 flex flex-col transition-transform duration-300 -translate-x-full lg:translate-x-0 shrink-0 shadow-xl">
+            <!-- Brand -->
+            <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-lg">
+                        <i class="fa-solid fa-building-user text-lg"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-white text-base leading-tight">QL Phòng Trọ</h2>
+                        <span class="text-[11px] text-indigo-400 font-medium">11 Bảng Quan Hệ (ERD)</span>
+                    </div>
+                </div>
+                <button class="lg:hidden text-slate-400 hover:text-white" onclick="toggleSidebar()">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Menu List -->
+            <div class="flex-1 overflow-y-auto py-4 px-3 space-y-6">
+                <!-- Tổng quan & Sơ đồ -->
+                <div>
+                    <div class="px-3 text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Hệ thống & Trực quan</div>
+                    <nav class="space-y-1">
+                        <button onclick="navigate('dashboard')" data-nav="dashboard" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition">
+                            <i class="fa-solid fa-chart-pie w-5 text-center"></i>
+                            <span>Dashboard Tổng quan</span>
+                        </button>
+                        <button onclick="navigate('erd')" data-nav="erd" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition">
+                            <i class="fa-solid fa-diagram-project w-5 text-center"></i>
+                            <span>Sơ đồ quan hệ (ERD)</span>
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Nhóm 1: Cơ sở vật chất -->
+                <div>
+                    <div class="px-3 text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Cơ sở vật chất</div>
+                    <nav class="space-y-1">
+                        <button onclick="navigate('KHU')" data-nav="KHU" class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition">
+                            <span class="flex items-center gap-3"><i class="fa-solid fa-map-location-dot w-5 text-center"></i>Khu trọ (KHU)</span>
+                            <span id="badge-KHU" class="text-[11px] bg-slate-800 px-2 py-0.5 rounded-full">0</span>
+                        </button>
+                        <button onclick="navigate('LOAI_PHONG')" data-nav="LOAI_PHONG" class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition">
+                            <span class="flex items-center gap-3"><i class="fa-solid fa-tags w-5 text-center"></i>Loại phòng</span>
+                            <span id="badge-LOAI_PHONG" class="text-[11px] bg-slate-800 px-2 py-0.5 rounded-full">0</span>
+                        </button>
+                        <button onclick="navigate('PHONG')" data-nav="PHONG" class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition">
+                            <span class="flex items-center gap-3"><i class="fa-solid fa-door-open w-5 text-center"></i>Phòng trọ (PHONG)</span>
+                            <span id="badge-PHONG" class="text-[11px] bg-slate-800 px-2 py-0.5 rounded-full">0</span>
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Nhóm 2: Khách & Hợp đồng -->
+                <div>
+                    <div class="px-3 text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Khách thuê & Tài chính</div>
+                    <nav class="space-y-1">
+                        <button onclick="navigate('KHACH_THUE')" data-nav="KHACH_THUE" class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition">
+                            <span class="flex items-center gap-3"><i class="fa-solid fa-users w-5 text-center"></i>Khách thuê</span>
+                            <span id="badge-KHACH_THUE" class="text-[11px] bg-slate-800 px-2 py-0.5 rounded-full">0</span>
+                        </button>
+                        <button onclick="navigate('HOP_DONG')" data-nav="HOP_DONG" class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition">
+                            <span class="flex items-center gap-3"><i class="fa-solid fa-file-signature w-5 text-center"></i>Hợp đồng thuê</span>
+                            <span id="badge-HOP_DONG" class="text-[11px] bg-slate-800 px-2 py-0.5 rounded-full">0</span>
+                        </button>
+                        <button onclick="navigate('PHIEU_THU')" data-nav="PHIEU_THU" class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition">
+                            <span class="flex items-center gap-3"><i class="fa-solid fa-receipt w-5 text-center"></i>Phiếu thu tiền</span>
+                            <span id="badge-PHIEU_THU" class="text-[11px] bg-slate-800 px-2 py-0.5 rounded-full">0</span>
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Nhóm 3: Điện nước & Dịch vụ -->
+                <div>
+                    <div class="px-3 text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Điện nước & Dịch vụ</div>
+                    <nav class="space-y-1">
+                        <button onclick="navigate('CHI_SO_DIEN')" data-nav="CHI_SO_DIEN" class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition">
+                            <span class="flex items-center gap-3"><i class="fa-solid fa-bolt w-5 text-center text-amber-400"></i>Chỉ số điện</span>
+                            <span id="badge-CHI_SO_DIEN" class="text-[11px] bg-slate-800 px-2 py-0.5 rounded-full">0</span>
+                        </button>
+                        <button onclick="navigate('CHI_SO_NUOC')" data-nav="CHI_SO_NUOC" class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition">
+                            <span class="flex items-center gap-3"><i class="fa-solid fa-droplet w-5 text-center text-sky-400"></i>Chỉ số nước</span>
+                            <span id="badge-CHI_SO_NUOC" class="text-[11px] bg-slate-800 px-2 py-0.5 rounded-full">0</span>
+                        </button>
+                        <button onclick="navigate('DICH_VU')" data-nav="DICH_VU" class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition">
+                            <span class="flex items-center gap-3"><i class="fa-solid fa-concierge-bell w-5 text-center"></i>Danh mục dịch vụ</span>
+                            <span id="badge-DICH_VU" class="text-[11px] bg-slate-800 px-2 py-0.5 rounded-full">0</span>
+                        </button>
+                        <button onclick="navigate('YEU_CAU_DV')" data-nav="YEU_CAU_DV" class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition">
+                            <span class="flex items-center gap-3"><i class="fa-solid fa-clipboard-list w-5 text-center"></i>Yêu cầu dịch vụ</span>
+                            <span id="badge-YEU_CAU_DV" class="text-[11px] bg-slate-800 px-2 py-0.5 rounded-full">0</span>
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Nhóm 4: Quản trị -->
+                <div>
+                    <div class="px-3 text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Quản trị</div>
+                    <nav class="space-y-1">
+                        <button onclick="navigate('NGUOI_DUNG')" data-nav="NGUOI_DUNG" class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition">
+                            <span class="flex items-center gap-3"><i class="fa-solid fa-user-shield w-5 text-center"></i>Người dùng</span>
+                            <span id="badge-NGUOI_DUNG" class="text-[11px] bg-slate-800 px-2 py-0.5 rounded-full">0</span>
+                        </button>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- User Profile & Actions -->
+            <div class="p-4 border-t border-slate-800 bg-slate-950/50 space-y-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-sm" id="user-avatar">A</div>
+                    <div class="overflow-hidden flex-1">
+                        <div id="current-user-name" class="text-sm font-semibold text-white truncate">Admin</div>
+                        <div id="current-user-role" class="text-xs text-slate-400 truncate">Quản trị viên</div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="confirmResetData()" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition" title="Khôi phục dữ liệu mẫu ban đầu">
+                        <i class="fa-solid fa-rotate-left"></i> Mẫu gốc
+                    </button>
+                    <button onclick="logout()" class="px-2.5 py-1.5 bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition">
+                        <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="flex-1 min-w-0 flex flex-col">
+            <!-- Top Bar -->
+            <div class="bg-white border-b border-slate-200 px-6 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-20">
+                <div>
+                    <h1 id="page-title" class="text-xl font-bold text-slate-900">Dashboard Tổng quan</h1>
+                    <p id="page-subtitle" class="text-xs text-slate-500 mt-0.5">Theo dõi tình trạng phòng, hợp đồng và doanh thu thời gian thực</p>
+                </div>
+                <div class="flex items-center gap-2 text-xs">
+                    <span class="px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 font-medium border border-emerald-200 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> LocalStorage Sync
+                    </span>
+                </div>
+            </div>
+
+            <!-- Dynamic Content Area -->
+            <div id="content-area" class="p-4 sm:p-6 lg:p-8 flex-1 max-w-full overflow-x-hidden">
+                <!-- Nội dung sẽ được render bằng JS -->
+            </div>
+        </main>
+    </div>
+
+    <!-- ==================== MODAL FORM THÊM / SỬA DỮ LIỆU ==================== -->
+    <div id="crud-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 hidden items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full overflow-hidden fade-in my-auto border border-slate-100">
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </div>
+                    <h3 id="modal-title" class="font-bold text-slate-900 text-base">Thêm bản ghi mới</h3>
+                </div>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 w-8 h-8 rounded-lg flex items-center justify-center hover:bg-slate-200/50 transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <form id="crud-form" class="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+                <div id="form-fields" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Các trường input/select sẽ được sinh tự động theo cấu trúc bảng -->
+                </div>
+                
+                <div class="pt-4 border-t border-slate-100 flex justify-end gap-3">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition">Hủy bỏ</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm transition flex items-center gap-2">
+                        <i class="fa-solid fa-floppy-disk"></i> Lưu dữ liệu
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+    <script>
+        /**
+         * 1. DỮ LIỆU MẪU BAN ĐẦU (11 BẢNG CHUẨN ERD)
+         */
+        const INITIAL_DB = {
+            NGUOI_DUNG: [
+                { MaND: 'ND01', TenDangNhap: 'admin', MatKhau: '123456', HoTen: 'Nguyễn Quản Trị', VaiTro: 'Quản trị viên' },
+                { MaND: 'ND02', TenDangNhap: 'nhanvien', MatKhau: '123456', HoTen: 'Trần Thu Ngân', VaiTro: 'Nhân viên' }
+            ],
+            KHU: [
+                { MaKhu: 'KHU01', TenKhu: 'Khu A - Mặt tiền', DiaChi: '120 Nguyễn Văn Cừ, Q.5, TP.HCM', MoTa: 'Khu nhà trọ cao cấp có thang máy, bảo vệ 24/7' },
+                { MaKhu: 'KHU02', TenKhu: 'Khu B - Sân vườn', DiaChi: '45/8 Lê Văn Sỹ, Q.3, TP.HCM', MoTa: 'Khu yên tĩnh, thoáng mát, có chỗ để xe rộng' }
+            ],
+            LOAI_PHONG: [
+                { MaLoai: 'LP01', TenLoai: 'Phòng Studio Ban Công', DienTich: 28, MoTa: 'Full nội thất, máy lạnh, máy giặt riêng, ban công thoáng' },
+                { MaLoai: 'LP02', TenLoai: 'Phòng Tiêu Chuẩn Có Gác', DienTich: 22, MoTa: 'Gác lửng đúc, kệ bếp, toilet riêng' },
+                { MaLoai: 'LP03', TenLoai: 'Phòng Đơn Tiết Kiệm', DienTich: 16, MoTa: 'Phù hợp sinh viên, đầy đủ tiện nghi cơ bản' }
+            ],
+            PHONG: [
+                { MaPhong: 'P101', MaKhu: 'KHU01', MaLoai: 'LP01', SoPhong: 'A101', Tang: 1, GiaThue: 4500000, TrangThai: 'Đang thuê' },
+                { MaPhong: 'P102', MaKhu: 'KHU01', MaLoai: 'LP02', SoPhong: 'A102', Tang: 1, GiaThue: 3500000, TrangThai: 'Đang thuê' },
+                { MaPhong: 'P201', MaKhu: 'KHU01', MaLoai: 'LP01', SoPhong: 'A201', Tang: 2, GiaThue: 4600000, TrangThai: 'Trống' },
+                { MaPhong: 'P202', MaKhu: 'KHU02', MaLoai: 'LP03', SoPhong: 'B101', Tang: 1, GiaThue: 2600000, TrangThai: 'Đang thuê' },
+                { MaPhong: 'P203', MaKhu: 'KHU02', MaLoai: 'LP02', SoPhong: 'B102', Tang: 1, GiaThue: 3200000, TrangThai: 'Bảo trì' }
+            ],
+            KHACH_THUE: [
+                { MaKhach: 'KH01', HoTen: 'Lê Minh Khôi', NgaySinh: '1998-05-14', CCCD: '079098001234', SDT: '0909123456', Email: 'khoi.le@gmail.com' },
+                { MaKhach: 'KH02', HoTen: 'Phạm Thị Thảo Vy', NgaySinh: '2001-11-22', CCCD: '079301005678', SDT: '0918234567', Email: 'vy.pham@gmail.com' },
+                { MaKhach: 'KH03', HoTen: 'Hoàng Quốc Bảo', NgaySinh: '1996-02-09', CCCD: '079096009988', SDT: '0987654321', Email: 'bao.hoang@gmail.com' }
+            ],
+            HOP_DONG: [
+                { MaHopDong: 'HD001', MaPhong: 'P101', MaKhach: 'KH01', NgayLap: '2026-01-01', NgayBatDau: '2026-01-05', NgayKetThuc: '2027-01-05', TienCoc: 4500000, TrangThai: 'Hiệu lực' },
+                { MaHopDong: 'HD002', MaPhong: 'P102', MaKhach: 'KH02', NgayLap: '2026-03-10', NgayBatDau: '2026-03-15', NgayKetThuc: '2027-03-15', TienCoc: 3500000, TrangThai: 'Hiệu lực' },
+                { MaHopDong: 'HD003', MaPhong: 'P202', MaKhach: 'KH03', NgayLap: '2026-06-01', NgayBatDau: '2026-06-01', NgayKetThuc: '2026-12-01', TienCoc: 2600000, TrangThai: 'Hiệu lực' }
+            ],
+            PHIEU_THU: [
+                { MaPhieu: 'PT001', MaHopDong: 'HD001', NgayThu: '2026-10-05', KyThu: 'Tháng 10/2026', SoTien: 4500000, HinhThucTT: 'Chuyển khoản' },
+                { MaPhieu: 'PT002', MaHopDong: 'HD002', NgayThu: '2026-10-06', KyThu: 'Tháng 10/2026', SoTien: 3500000, HinhThucTT: 'Tiền mặt' },
+                { MaPhieu: 'PT003', MaHopDong: 'HD001', NgayThu: '2026-11-05', KyThu: 'Tháng 11/2026', SoTien: 4500000, HinhThucTT: 'Chuyển khoản' }
+            ],
+            CHI_SO_DIEN: [
+                { MaCS: 'CSD01', MaPhong: 'P101', NgayGhi: '2026-10-30', SoDien: 145, DonGia: 3500, ThanhTien: 507500 },
+                { MaCS: 'CSD02', MaPhong: 'P102', NgayGhi: '2026-10-30', SoDien: 98, DonGia: 3500, ThanhTien: 343000 },
+                { MaCS: 'CSD03', MaPhong: 'P202', NgayGhi: '2026-10-30', SoDien: 62, DonGia: 3500, ThanhTien: 217000 }
+            ],
+            CHI_SO_NUOC: [
+                { MaCN: 'CSN01', MaPhong: 'P101', NgayGhi: '2026-10-30', SoKhoi: 12, DonGia: 18000, ThanhTien: 216000 },
+                { MaCN: 'CSN02', MaPhong: 'P102', NgayGhi: '2026-10-30', SoKhoi: 8, DonGia: 18000, ThanhTien: 144000 },
+                { MaCN: 'CSN03', MaPhong: 'P202', NgayGhi: '2026-10-30', SoKhoi: 6, DonGia: 18000, ThanhTien: 108000 }
+            ],
+            DICH_VU: [
+                { MaDV: 'DV01', TenDV: 'Internet Cáp Quang Wi-Fi', DonGia: 100000, DonViTinh: 'Tháng', TrangThai: 'Hoạt động' },
+                { MaDV: 'DV02', TenDV: 'Giữ xe máy tầng hầm', DonGia: 120000, DonViTinh: 'Chiếc/Tháng', TrangThai: 'Hoạt động' },
+                { MaDV: 'DV03', TenDV: 'Vệ sinh phòng định kỳ', DonGia: 150000, DonViTinh: 'Lần', TrangThai: 'Hoạt động' },
+                { MaDV: 'DV04', TenDV: 'Đổi bình nước uống 20L', DonGia: 45000, DonViTinh: 'Bình', TrangThai: 'Hoạt động' }
+            ],
+            YEU_CAU_DV: [
+                { MaYC: 'YC001', MaKhach: 'KH01', MaDV: 'DV01', NgayYC: '2026-11-01', SoLuong: 1, DonGia: 100000, ThanhTien: 100000 },
+                { MaYC: 'YC002', MaKhach: 'KH01', MaDV: 'DV02', NgayYC: '2026-11-01', SoLuong: 2, DonGia: 120000, ThanhTien: 240000 },
+                { MaYC: 'YC003', MaKhach: 'KH02', MaDV: 'DV04', NgayYC: '2026-11-05', SoLuong: 3, DonGia: 45000, ThanhTien: 135000 }
+            ]
+        };
+
+        /**
+         * 2. CẤU HÌNH SCHEMA & RÀNG BUỘC QUAN HỆ (ERD METADATA)
+         */
+        const TABLE_SCHEMAS = {
+            KHU: {
+                title: 'Quản lý Khu trọ (KHU)',
+                subtitle: 'Danh sách các tòa nhà / khu vực phòng trọ',
+                pk: 'MaKhu',
+                prefix: 'KHU',
+                children: [{ table: 'PHONG', fk: 'MaKhu', label: 'Phòng trọ' }],
+                fields: [
+                    { name: 'MaKhu', label: 'Mã Khu (PK)', type: 'text', required: true, readonlyOnEdit: true },
+                    { name: 'TenKhu', label: 'Tên Khu', type: 'text', required: true },
+                    { name: 'DiaChi', label: 'Địa chỉ', type: 'text', required: true, fullWidth: true },
+                    { name: 'MoTa', label: 'Mô tả', type: 'textarea', fullWidth: true }
+                ]
+            },
+            LOAI_PHONG: {
+                title: 'Quản lý Loại phòng (LOAI_PHONG)',
+                subtitle: 'Phân loại diện tích và tiêu chuẩn nội thất phòng',
+                pk: 'MaLoai',
+                prefix: 'LP',
+                children: [{ table: 'PHONG', fk: 'MaLoai', label: 'Phòng trọ' }],
+                fields: [
+                    { name: 'MaLoai', label: 'Mã Loại (PK)', type: 'text', required: true, readonlyOnEdit: true },
+                    { name: 'TenLoai', label: 'Tên Loại Phòng', type: 'text', required: true },
+                    { name: 'DienTich', label: 'Diện tích (m²)', type: 'number', required: true },
+                    { name: 'MoTa', label: 'Mô tả tiện ích', type: 'textarea', fullWidth: true }
+                ]
+            },
+            PHONG: {
+                title: 'Quản lý Phòng trọ (PHONG)',
+                subtitle: 'Liên kết FK tới Khu trọ và Loại phòng',
+                pk: 'MaPhong',
+                prefix: 'P',
+                children: [
+                    { table: 'HOP_DONG', fk: 'MaPhong', label: 'Hợp đồng' },
+                    { table: 'CHI_SO_DIEN', fk: 'MaPhong', label: 'Chỉ số điện' },
+                    { table: 'CHI_SO_NUOC', fk: 'MaPhong', label: 'Chỉ số nước' }
+                ],
+                fields: [
+                    { name: 'MaPhong', label: 'Mã Phòng (PK)', type: 'text', required: true, readonlyOnEdit: true },
+                    { name: 'SoPhong', label: 'Số Phòng', type: 'text', required: true },
+                    { name: 'MaKhu', label: 'Thuộc Khu (FK)', type: 'fk', refTable: 'KHU', refValue: 'MaKhu', refLabel: (r) => `${r.TenKhu} (${r.MaKhu})`, required: true },
+                    { name: 'MaLoai', label: 'Loại Phòng (FK)', type: 'fk', refTable: 'LOAI_PHONG', refValue: 'MaLoai', refLabel: (r) => `${r.TenLoai} - ${r.DienTich}m²`, required: true },
+                    { name: 'Tang', label: 'Tầng', type: 'number', required: true },
+                    { name: 'GiaThue', label: 'Giá Thuê (VNĐ)', type: 'number', format: 'currency', required: true },
+                    { name: 'TrangThai', label: 'Trạng Thái', type: 'select', options: ['Trống', 'Đang thuê', 'Bảo trì'], required: true }
+                ]
+            },
+            KHACH_THUE: {
+                title: 'Quản lý Khách thuê (KHACH_THUE)',
+                subtitle: 'Hồ sơ thông tin định danh khách hàng thuê trọ',
+                pk: 'MaKhach',
+                prefix: 'KH',
+                children: [
+                    { table: 'HOP_DONG', fk: 'MaKhach', label: 'Hợp đồng' },
+                    { table: 'YEU_CAU_DV', fk: 'MaKhach', label: 'Yêu cầu dịch vụ' }
+                ],
+                fields: [
+                    { name: 'MaKhach', label: 'Mã Khách (PK)', type: 'text', required: true, readonlyOnEdit: true },
+                    { name: 'HoTen', label: 'Họ và Tên', type: 'text', required: true },
+                    { name: 'NgaySinh', label: 'Ngày Sinh', type: 'date', required: true },
+                    { name: 'CCCD', label: 'Số CCCD/CMND', type: 'text', required: true },
+                    { name: 'SDT', label: 'Số Điện Thoại', type: 'text', required: true },
+                    { name: 'Email', label: 'Email', type: 'email' }
+                ]
+            },
+            HOP_DONG: {
+                title: 'Quản lý Hợp đồng thuê (HOP_DONG)',
+                subtitle: 'Liên kết Phòng & Khách thuê. Tự động cập nhật trạng thái Phòng khi hiệu lực',
+                pk: 'MaHopDong',
+                prefix: 'HD',
+                children: [{ table: 'PHIEU_THU', fk: 'MaHopDong', label: 'Phiếu thu' }],
+                fields: [
+                    { name: 'MaHopDong', label: 'Mã Hợp Đồng (PK)', type: 'text', required: true, readonlyOnEdit: true },
+                    { name: 'MaPhong', label: 'Phòng Thuê (FK)', type: 'fk', refTable: 'PHONG', refValue: 'MaPhong', refLabel: (r) => `Phòng ${r.SoPhong} (${r.TrangThai}) - ${formatMoney(r.GiaThue)}`, required: true },
+                    { name: 'MaKhach', label: 'Khách Đại Diện (FK)', type: 'fk', refTable: 'KHACH_THUE', refValue: 'MaKhach', refLabel: (r) => `${r.HoTen} (${r.SDT})`, required: true },
+                    { name: 'NgayLap', label: 'Ngày Lập HĐ', type: 'date', required: true },
+                    { name: 'NgayBatDau', label: 'Ngày Bắt Đầu', type: 'date', required: true },
+                    { name: 'NgayKetThuc', label: 'Ngày Kết Thúc', type: 'date', required: true },
+                    { name: 'TienCoc', label: 'Tiền Cọc (VNĐ)', type: 'number', format: 'currency', required: true },
+                    { name: 'TrangThai', label: 'Trạng Thái HĐ', type: 'select', options: ['Hiệu lực', 'Đã thanh lý', 'Chờ duyệt'], required: true }
+                ]
+            },
+            PHIEU_THU: {
+                title: 'Quản lý Phiếu thu (PHIEU_THU)',
+                subtitle: 'Liên kết FK tới Hợp đồng, tự động hiển thị thông tin Phòng và Khách thuê',
+                pk: 'MaPhieu',
+                prefix: 'PT',
+                children: [],
+                fields: [
+                    { name: 'MaPhieu', label: 'Mã Phiếu (PK)', type: 'text', required: true, readonlyOnEdit: true },
+                    { name: 'MaHopDong', label: 'Hợp Đồng (FK)', type: 'fk', refTable: 'HOP_DONG', refValue: 'MaHopDong', refLabel: (r) => {
+                        const p = getRecord('PHONG', r.MaPhong);
+                        const k = getRecord('KHACH_THUE', r.MaKhach);
+                        return `${r.MaHopDong} | P.${p ? p.SoPhong : r.MaPhong} - ${k ? k.HoTen : r.MaKhach}`;
+                    }, required: true },
+                    { name: 'KyThu', label: 'Kỳ Thu (VD: Tháng 11/2026)', type: 'text', required: true },
+                    { name: 'NgayThu', label: 'Ngày Thu Tiền', type: 'date', required: true },
+                    { name: 'SoTien', label: 'Số Tiền Thu (VNĐ)', type: 'number', format: 'currency', required: true },
+                    { name: 'HinhThucTT', label: 'Hình Thức Thanh Toán', type: 'select', options: ['Chuyển khoản', 'Tiền mặt', 'Ví điện tử'], required: true }
+                ]
+            },
+            CHI_SO_DIEN: {
+                title: 'Quản lý Chỉ số điện (CHI_SO_DIEN)',
+                subtitle: 'Ghi nhận điện tiêu thụ theo Phòng, tự động tính Thành tiền = Số điện × Đơn giá',
+                pk: 'MaCS',
+                prefix: 'CSD',
+                children: [],
+                fields: [
+                    { name: 'MaCS', label: 'Mã Chỉ Số (PK)', type: 'text', required: true, readonlyOnEdit: true },
+                    { name: 'MaPhong', label: 'Phòng (FK)', type: 'fk', refTable: 'PHONG', refValue: 'MaPhong', refLabel: (r) => `Phòng ${r.SoPhong} (${r.MaPhong})`, required: true },
+                    { name: 'NgayGhi', label: 'Ngày Ghi Sổ', type: 'date', required: true },
+                    { name: 'SoDien', label: 'Số Điện Tiêu Thụ (kWh)', type: 'number', required: true },
+                    { name: 'DonGia', label: 'Đơn Giá (VNĐ/kWh)', type: 'number', format: 'currency', defaultValue: 3500, required: true },
+                    { name: 'ThanhTien', label: 'Thành Tiền (Tự động)', type: 'number', format: 'currency', computed: true, readonly: true }
+                ]
+            },
+            CHI_SO_NUOC: {
+                title: 'Quản lý Chỉ số nước (CHI_SO_NUOC)',
+                subtitle: 'Ghi nhận nước tiêu thụ theo Phòng, tự động tính Thành tiền = Số khối × Đơn giá',
+                pk: 'MaCN',
+                prefix: 'CSN',
+                children: [],
+                fields: [
+                    { name: 'MaCN', label: 'Mã Chỉ Số (PK)', type: 'text', required: true, readonlyOnEdit: true },
+                    { name: 'MaPhong', label: 'Phòng (FK)', type: 'fk', refTable: 'PHONG', refValue: 'MaPhong', refLabel: (r) => `Phòng ${r.SoPhong} (${r.MaPhong})`, required: true },
+                    { name: 'NgayGhi', label: 'Ngày Ghi Sổ', type: 'date', required: true },
+                    { name: 'SoKhoi', label: 'Số Khối Tiêu Thụ (m³)', type: 'number', required: true },
+                    { name: 'DonGia', label: 'Đơn Giá (VNĐ/m³)', type: 'number', format: 'currency', defaultValue: 18000, required: true },
+                    { name: 'ThanhTien', label: 'Thành Tiền (Tự động)', type: 'number', format: 'currency', computed: true, readonly: true }
+                ]
+            },
+            DICH_VU: {
+                title: 'Danh mục Dịch vụ (DICH_VU)',
+                subtitle: 'Các dịch vụ tiện ích cung cấp cho khách thuê trọ',
+                pk: 'MaDV',
+                prefix: 'DV',
+                children: [{ table: 'YEU_CAU_DV', fk: 'MaDV', label: 'Yêu cầu dịch vụ' }],
+                fields: [
+                    { name: 'MaDV', label: 'Mã Dịch Vụ (PK)', type: 'text', required: true, readonlyOnEdit: true },
+                    { name: 'TenDV', label: 'Tên Dịch Vụ', type: 'text', required: true },
+                    { name: 'DonGia', label: 'Đơn Giá (VNĐ)', type: 'number', format: 'currency', required: true },
+                    { name: 'DonViTinh', label: 'Đơn Vị Tính', type: 'text', required: true },
+                    { name: 'TrangThai', label: 'Trạng Thái', type: 'select', options: ['Hoạt động', 'Tạm ngưng'], required: true }
+                ]
+            },
+            YEU_CAU_DV: {
+                title: 'Yêu cầu Dịch vụ (YEU_CAU_DV)',
+                subtitle: 'Liên kết Khách thuê & Dịch vụ. Tự động lấy Đơn giá và tính Thành tiền',
+                pk: 'MaYC',
+                prefix: 'YC',
+                children: [],
+                fields: [
+                    { name: 'MaYC', label: 'Mã Yêu Cầu (PK)', type: 'text', required: true, readonlyOnEdit: true },
+                    { name: 'MaKhach', label: 'Khách Yêu Cầu (FK)', type: 'fk', refTable: 'KHACH_THUE', refValue: 'MaKhach', refLabel: (r) => `${r.HoTen} (${r.MaKhach})`, required: true },
+                    { name: 'MaDV', label: 'Dịch Vụ (FK)', type: 'fk', refTable: 'DICH_VU', refValue: 'MaDV', refLabel: (r) => `${r.TenDV} (${formatMoney(r.DonGia)}/${r.DonViTinh})`, required: true },
+                    { name: 'NgayYC', label: 'Ngày Yêu Cầu', type: 'date', required: true },
+                    { name: 'SoLuong', label: 'Số Lượng', type: 'number', defaultValue: 1, required: true },
+                    { name: 'DonGia', label: 'Đơn Giá (Tự động từ DV)', type: 'number', format: 'currency', readonly: true, required: true },
+                    { name: 'ThanhTien', label: 'Thành Tiền (Tự động)', type: 'number', format: 'currency', computed: true, readonly: true }
+                ]
+            },
+            NGUOI_DUNG: {
+                title: 'Quản lý Người dùng (NGUOI_DUNG)',
+                subtitle: 'Tài khoản đăng nhập và phân quyền quản trị hệ thống',
+                pk: 'MaND',
+                prefix: 'ND',
+                children: [],
+                fields: [
+                    { name: 'MaND', label: 'Mã Người Dùng (PK)', type: 'text', required: true, readonlyOnEdit: true },
+                    { name: 'TenDangNhap', label: 'Tên Đăng Nhập', type: 'text', required: true },
+                    { name: 'MatKhau', label: 'Mật Khẩu', type: 'text', required: true },
+                    { name: 'HoTen', label: 'Họ và Tên', type: 'text', required: true },
+                    { name: 'VaiTro', label: 'Vai Trò', type: 'select', options: ['Quản trị viên', 'Nhân viên'], required: true }
+                ]
+            }
+        };
+
+        /**
+         * 3. TRẠNG THÁI ỨNG DỤNG & QUẢN LÝ LOCALSTORAGE
+         */
+        const DB_KEY = 'QL_PHONG_TRO_ERD_DB_V1';
+        const SESSION_KEY = 'QL_PHONG_TRO_SESSION_V1';
+
+        let db = {};
+        let currentUser = null;
+        let currentRoute = 'dashboard';
+        let searchQuery = '';
+        let filterStatus = 'ALL';
+        let editingRecordId = null;
+
+        function loadDB() {
+            const raw = localStorage.getItem(DB_KEY);
+            if (raw) {
+                try {
+                    db = JSON.parse(raw);
+                } catch (e) {
+                    db = JSON.parse(JSON.stringify(INITIAL_DB));
+                    saveDB();
+                }
+            } else {
+                db = JSON.parse(JSON.stringify(INITIAL_DB));
+                saveDB();
+            }
+            updateSidebarBadges();
+        }
+
+        function saveDB() {
+            localStorage.setItem(DB_KEY, JSON.stringify(db));
+            updateSidebarBadges();
+        }
+
+        function getRecord(table, pkValue) {
+            const schema = TABLE_SCHEMAS[table];
+            if (!schema || !db[table]) return null;
+            return db[table].find(item => item[schema.pk] === pkValue) || null;
+        }
+
+        function formatMoney(amount) {
+            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0);
+        }
+
+        /**
+         * 4. HỆ THỐNG THÔNG BÁO (TOAST & CONFIRM MODAL)
+         */
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const colors = {
+                success: 'bg-emerald-600 text-white',
+                error: 'bg-rose-600 text-white',
+                warning: 'bg-amber-500 text-white',
+                info: 'bg-indigo-600 text-white'
+            };
+            const icons = {
+                success: 'fa-circle-check',
+                error: 'fa-circle-xmark',
+                warning: 'fa-triangle-exclamation',
+                info: 'fa-circle-info'
+            };
+            toast.className = `${colors[type]} px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 text-sm font-medium pointer-events-auto fade-in`;
+            toast.innerHTML = `<i class="fa-solid ${icons[type]} text-base"></i><span class="flex-1">${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(20px)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        function showConfirm(title, message, onConfirm) {
+            const modal = document.getElementById('confirm-modal');
+            document.getElementById('confirm-title').textContent = title;
+            document.getElementById('confirm-message').textContent = message;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            const okBtn = document.getElementById('confirm-ok-btn');
+            const cancelBtn = document.getElementById('confirm-cancel-btn');
+
+            const cleanup = () => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                okBtn.onclick = null;
+                cancelBtn.onclick = null;
+            };
+
+            cancelBtn.onclick = cleanup;
+            okBtn.onclick = () => {
+                cleanup();
+                onConfirm();
+            };
+        }
+
+        function confirmResetData() {
+            showConfirm(
+                'Khôi phục dữ liệu mẫu?',
+                'Toàn bộ dữ liệu bạn đã thêm/sửa sẽ được đưa về trạng thái mẫu ban đầu của hệ thống 11 bảng. Bạn có chắc chắn muốn tiếp tục?',
+                () => {
+                    db = JSON.parse(JSON.stringify(INITIAL_DB));
+                    saveDB();
+                    renderCurrentView();
+                    showToast('Đã khôi phục dữ liệu mẫu thành công!', 'success');
+                }
+            );
+        }
+
+        /**
+         * 5. XỬ LÝ ĐĂNG NHẬP / ĐĂNG XUẤT
+         */
+        function fillAccount(user, pass) {
+            document.getElementById('login-username').value = user;
+            document.getElementById('login-password').value = pass;
+        }
+
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value.trim();
+
+            const user = db.NGUOI_DUNG.find(u => u.TenDangNhap === username && u.MatKhau === password);
+            if (user) {
+                currentUser = user;
+                localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+                initAppSession();
+                showToast(`Chào mừng ${user.HoTen} đã quay trở lại!`, 'success');
+            } else {
+                showToast('Sai tên đăng nhập hoặc mật khẩu!', 'error');
+            }
+        });
+
+        function initAppSession() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            document.getElementById('current-user-name').textContent = currentUser.HoTen;
+            document.getElementById('current-user-role').textContent = currentUser.VaiTro;
+            document.getElementById('user-avatar').textContent = currentUser.HoTen.charAt(0).toUpperCase();
+            navigate('dashboard');
+        }
+
+        function logout() {
+            localStorage.removeItem(SESSION_KEY);
+            currentUser = null;
+            document.getElementById('main-app').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+            showToast('Đã đăng xuất khỏi hệ thống', 'info');
+        }
+
+        /**
+         * 6. ĐIỀU HƯỚNG & SIDEBAR
+         */
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            sidebar.classList.toggle('-translate-x-full');
+            backdrop.classList.toggle('hidden');
+        }
+
+        document.getElementById('mobile-menu-btn').addEventListener('click', toggleSidebar);
+
+        function updateSidebarBadges() {
+            Object.keys(TABLE_SCHEMAS).forEach(table => {
+                const badge = document.getElementById(`badge-${table}`);
+                if (badge && db[table]) {
+                    badge.textContent = db[table].length;
+                }
+            });
+        }
+
+        function navigate(route) {
+            currentRoute = route;
+            searchQuery = '';
+            filterStatus = 'ALL';
+
+            // Active state sidebar
+            document.querySelectorAll('.nav-item').forEach(btn => {
+                if (btn.dataset.nav === route) {
+                    btn.classList.add('bg-indigo-600', 'text-white', 'shadow-md');
+                    btn.classList.remove('text-slate-300', 'hover:bg-slate-800');
+                } else {
+                    btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-md');
+                    btn.classList.add('text-slate-300', 'hover:bg-slate-800');
+                }
+            });
+
+            // Đóng sidebar trên mobile
+            if (window.innerWidth < 1024) {
+                document.getElementById('sidebar').classList.add('-translate-x-full');
+                document.getElementById('sidebar-backdrop').classList.add('hidden');
+            }
+
+            renderCurrentView();
+        }
+
+        function renderCurrentView() {
+            const titleEl = document.getElementById('page-title');
+            const subEl = document.getElementById('page-subtitle');
+            const area = document.getElementById('content-area');
+
+            if (currentRoute === 'dashboard') {
+                titleEl.textContent = 'Dashboard Tổng quan';
+                subEl.textContent = 'Thống kê tình trạng phòng, hợp đồng hiệu lực và doanh thu hệ thống';
+                area.innerHTML = renderDashboard();
+            } else if (currentRoute === 'erd') {
+                titleEl.textContent = 'Sơ đồ Quan hệ Dữ liệu (ERD 11 Bảng)';
+                subEl.textContent = 'Cấu trúc khóa chính (PK), khóa ngoại (FK) và mối liên kết giữa các thực thể';
+                area.innerHTML = renderERD();
+            } else if (TABLE_SCHEMAS[currentRoute]) {
+                const schema = TABLE_SCHEMAS[currentRoute];
+                titleEl.textContent = schema.title;
+                subEl.textContent = schema.subtitle;
+                area.innerHTML = renderTableView(currentRoute);
+            }
+        }
+
+        /**
+         * 7. RENDER DASHBOARD TỔNG QUAN
+         */
+        function renderDashboard() {
+            const totalRooms = db.PHONG.length;
+            const rentedRooms = db.PHONG.filter(p => p.TrangThai === 'Đang thuê').length;
+            const emptyRooms = db.PHONG.filter(p => p.TrangThai === 'Trống').length;
+            const maintRooms = db.PHONG.filter(p => p.TrangThai === 'Bảo trì').length;
+
+            const totalReceipt = db.PHIEU_THU.reduce((sum, item) => sum + Number(item.SoTien || 0), 0);
+            const totalElec = db.CHI_SO_DIEN.reduce((sum, item) => sum + Number(item.ThanhTien || 0), 0);
+            const totalWater = db.CHI_SO_NUOC.reduce((sum, item) => sum + Number(item.ThanhTien || 0), 0);
+            const totalService = db.YEU_CAU_DV.reduce((sum, item) => sum + Number(item.ThanhTien || 0), 0);
+
+            return `
+            <div class="space-y-6 fade-in">
+                <!-- 4 Thẻ thống kê chính -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Tổng số phòng</p>
+                            <h3 class="text-2xl font-bold text-slate-900 mt-1">${totalRooms} <span class="text-xs font-normal text-slate-500">phòng</span></h3>
+                            <div class="flex items-center gap-2 mt-2 text-xs">
+                                <span class="text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded-md">Trống: ${emptyRooms}</span>
+                                <span class="text-indigo-600 font-medium bg-indigo-50 px-2 py-0.5 rounded-md">Thuê: ${rentedRooms}</span>
+                            </div>
+                        </div>
+                        <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-door-open"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Doanh thu Phiếu thu</p>
+                            <h3 class="text-2xl font-bold text-emerald-600 mt-1">${formatMoney(totalReceipt)}</h3>
+                            <p class="text-xs text-slate-500 mt-2">Từ ${db.PHIEU_THU.length} phiếu thu tiền phòng</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-sack-dollar"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Tổng tiền Điện & Nước</p>
+                            <h3 class="text-2xl font-bold text-amber-600 mt-1">${formatMoney(totalElec + totalWater)}</h3>
+                            <p class="text-xs text-slate-500 mt-2">Điện: ${formatMoney(totalElec)} | Nước: ${formatMoney(totalWater)}</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-bolt"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Doanh thu Dịch vụ</p>
+                            <h3 class="text-2xl font-bold text-violet-600 mt-1">${formatMoney(totalService)}</h3>
+                            <p class="text-xs text-slate-500 mt-2">${db.YEU_CAU_DV.length} lượt yêu cầu từ ${db.KHACH_THUE.length} khách</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-2xl bg-violet-50 text-violet-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-concierge-bell"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sơ đồ trạng thái phòng trực quan -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="font-bold text-slate-900">Tình trạng Phòng trọ theo Khu</h3>
+                                <p class="text-xs text-slate-500">Nhấn vào phòng để chuyển sang quản lý chi tiết</p>
+                            </div>
+                            <button onclick="navigate('PHONG')" class="text-xs font-semibold text-indigo-600 hover:underline">Quản lý phòng &rarr;</button>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                            ${db.PHONG.map(p => {
+                                const khu = getRecord('KHU', p.MaKhu);
+                                const loai = getRecord('LOAI_PHONG', p.MaLoai);
+                                const hd = db.HOP_DONG.find(h => h.MaPhong === p.MaPhong && h.TrangThai === 'Hiệu lực');
+                                const khach = hd ? getRecord('KHACH_THUE', hd.MaKhach) : null;
+                                
+                                let badgeClass = 'bg-emerald-100 text-emerald-700';
+                                let borderClass = 'border-emerald-200 hover:border-emerald-400';
+                                if (p.TrangThai === 'Đang thuê') {
+                                    badgeClass = 'bg-indigo-100 text-indigo-700';
+                                    borderClass = 'border-indigo-200 hover:border-indigo-400';
+                                } else if (p.TrangThai === 'Bảo trì') {
+                                    badgeClass = 'bg-amber-100 text-amber-700';
+                                    borderClass = 'border-amber-200 hover:border-amber-400';
+                                }
+
+                                return `
+                                <div onclick="navigate('PHONG')" class="p-4 rounded-xl border ${borderClass} bg-slate-50/50 cursor-pointer transition hover:shadow-md">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="font-bold text-base text-slate-900">P.${p.SoPhong}</span>
+                                        <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full ${badgeClass}">${p.TrangThai}</span>
+                                    </div>
+                                    <div class="text-xs text-slate-500 space-y-1">
+                                        <div class="truncate"><i class="fa-solid fa-location-dot w-4 text-slate-400"></i>${khu ? khu.TenKhu : p.MaKhu}</div>
+                                        <div class="truncate"><i class="fa-solid fa-tag w-4 text-slate-400"></i>${loai ? loai.TenLoai : p.MaLoai}</div>
+                                        <div class="font-semibold text-slate-700 pt-1">${formatMoney(p.GiaThue)}/tháng</div>
+                                        ${khach ? `<div class="mt-2 pt-2 border-t border-slate-200 text-indigo-700 font-medium truncate"><i class="fa-solid fa-user mr-1"></i>${khach.HoTen}</div>` : ''}
+                                    </div>
+                                </div>`;
+                            }).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Hợp đồng hiệu lực gần đây -->
+                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-slate-900">Hợp đồng đang hiệu lực</h3>
+                            <button onclick="navigate('HOP_DONG')" class="text-xs font-semibold text-indigo-600 hover:underline">Tất cả</button>
+                        </div>
+                        <div class="space-y-3 flex-1 overflow-y-auto">
+                            ${db.HOP_DONG.map(hd => {
+                                const p = getRecord('PHONG', hd.MaPhong);
+                                const k = getRecord('KHACH_THUE', hd.MaKhach);
+                                return `
+                                <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-bold text-xs text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">${hd.MaHopDong}</span>
+                                            <span class="font-semibold text-sm text-slate-800">Phòng ${p ? p.SoPhong : hd.MaPhong}</span>
+                                        </div>
+                                        <div class="text-xs text-slate-600 mt-1"><i class="fa-solid fa-user text-slate-400 mr-1"></i>${k ? k.HoTen : hd.MaKhach}</div>
+                                        <div class="text-[11px] text-slate-400 mt-0.5">Hạn: ${hd.NgayKetThuc}</div>
+                                    </div>
+                                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full ${hd.TrangThai === 'Hiệu lực' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}">
+                                        ${hd.TrangThai}
+                                    </span>
+                                </div>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        /**
+         * 8. RENDER SƠ ĐỒ QUAN HỆ ERD TRỰC QUAN
+         */
+        function renderERD() {
+            const erdTables = [
+                { name: 'KHU', color: 'bg-sky-700', fields: ['PK MaKhu', 'TenKhu', 'DiaChi', 'MoTa'], rel: '1:N → PHONG' },
+                { name: 'PHONG', color: 'bg-emerald-700', fields: ['PK MaPhong', 'FK MaKhu', 'FK MaLoai', 'SoPhong', 'Tang', 'GiaThue', 'TrangThai'], rel: '1:N → HOP_DONG, CHI_SO_DIEN, CHI_SO_NUOC' },
+                { name: 'LOAI_PHONG', color: 'bg-amber-700', fields: ['PK MaLoai', 'TenLoai', 'DienTich', 'MoTa'], rel: '1:N → PHONG' },
+                { name: 'KHACH_THUE', color: 'bg-indigo-700', fields: ['PK MaKhach', 'HoTen', 'NgaySinh', 'CCCD', 'SDT', 'Email'], rel: '1:N → HOP_DONG, YEU_CAU_DV' },
+                { name: 'HOP_DONG', color: 'bg-purple-700', fields: ['PK MaHopDong', 'FK MaPhong', 'FK MaKhach', 'NgayLap', 'NgayBatDau', 'NgayKetThuc', 'TienCoc', 'TrangThai'], rel: '1:N → PHIEU_THU' },
+                { name: 'PHIEU_THU', color: 'bg-cyan-700', fields: ['PK MaPhieu', 'FK MaHopDong', 'NgayThu', 'KyThu', 'SoTien', 'HinhThucTT'], rel: 'Bảng con của HOP_DONG' },
+                { name: 'DICH_VU', color: 'bg-teal-700', fields: ['PK MaDV', 'TenDV', 'DonGia', 'DonViTinh', 'TrangThai'], rel: '1:N → YEU_CAU_DV' },
+                { name: 'CHI_SO_DIEN', color: 'bg-orange-700', fields: ['PK MaCS', 'FK MaPhong', 'NgayGhi', 'SoDien', 'DonGia', 'ThanhTien'], rel: 'Bảng con của PHONG' },
+                { name: 'CHI_SO_NUOC', color: 'bg-blue-700', fields: ['PK MaCN', 'FK MaPhong', 'NgayGhi', 'SoKhoi', 'DonGia', 'ThanhTien'], rel: 'Bảng con của PHONG' },
+                { name: 'YEU_CAU_DV', color: 'bg-rose-700', fields: ['PK MaYC', 'FK MaKhach', 'FK MaDV', 'NgayYC', 'SoLuong', 'DonGia', 'ThanhTien'], rel: 'Liên kết KHACH_THUE & DICH_VU' },
+                { name: 'NGUOI_DUNG', color: 'bg-slate-800', fields: ['PK MaND', 'TenDangNhap', 'MatKhau', 'HoTen', 'VaiTro'], rel: 'Quản lý xác thực hệ thống' }
+            ];
+
+            return `
+            <div class="space-y-6 fade-in">
+                <div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-diagram-project"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-indigo-950 text-sm">Kiến trúc Cơ sở dữ liệu Quan hệ 11 Bảng</h3>
+                            <p class="text-xs text-indigo-700">Nhấn vào bất kỳ thẻ bảng nào bên dưới để mở giao diện quản lý CRUD và kiểm tra ràng buộc khóa ngoại của bảng đó.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 text-xs font-semibold">
+                        <span class="px-2.5 py-1 rounded bg-amber-100 text-amber-800"><i class="fa-solid fa-key mr-1"></i>PK: Khóa chính</span>
+                        <span class="px-2.5 py-1 rounded bg-indigo-100 text-indigo-800"><i class="fa-solid fa-link mr-1"></i>FK: Khóa ngoại</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                    ${erdTables.map(t => `
+                        <div onclick="navigate('${t.name}')" class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:border-indigo-400 transition cursor-pointer overflow-hidden flex flex-col">
+                            <div class="${t.color} text-white px-4 py-2.5 flex items-center justify-between">
+                                <span class="font-bold text-sm tracking-wide">${t.name}</span>
+                                <span class="text-[11px] bg-white/20 px-2 py-0.5 rounded-full">${db[t.name]?.length || 0} dòng</span>
+                            </div>
+                            <div class="p-4 flex-1 space-y-1.5 text-xs font-mono">
+                                ${t.fields.map(f => {
+                                    if (f.startsWith('PK ')) {
+                                        return `<div class="flex items-center gap-2 text-amber-700 font-bold bg-amber-50/80 px-2 py-1 rounded"><i class="fa-solid fa-key text-[10px]"></i>${f}</div>`;
+                                    } else if (f.startsWith('FK ')) {
+                                        return `<div class="flex items-center gap-2 text-indigo-700 font-semibold bg-indigo-50/80 px-2 py-1 rounded"><i class="fa-solid fa-link text-[10px]"></i>${f}</div>`;
+                                    }
+                                    return `<div class="text-slate-600 px-2 py-0.5 pl-6">${f}</div>`;
+                                }).join('')}
+                            </div>
+                            <div class="bg-slate-50 px-4 py-2 border-t border-slate-100 text-[11px] text-slate-500 font-medium flex items-center justify-between">
+                                <span>${t.rel}</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square text-indigo-500"></i>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>`;
+        }
+
+        /**
+         * 9. RENDER GIAO DIỆN QUẢN LÝ BẢNG DỮ LIỆU (CRUD + TÌM KIẾM + LỌC)
+         */
+        function renderTableView(tableName) {
+            const schema = TABLE_SCHEMAS[tableName];
+            let records = db[tableName] || [];
+
+            // Lọc theo trạng thái (nếu bảng có trường TrangThai)
+            const statusField = schema.fields.find(f => f.name === 'TrangThai');
+            if (statusField && filterStatus !== 'ALL') {
+                records = records.filter(r => r.TrangThai === filterStatus);
+            }
+
+            // Tìm kiếm từ khóa trên tất cả các cột (bao gồm cả tên hiển thị từ FK)
+            if (searchQuery.trim() !== '') {
+                const q = searchQuery.toLowerCase();
+                records = records.filter(row => {
+                    return schema.fields.some(f => {
+                        let val = String(row[f.name] || '').toLowerCase();
+                        if (f.type === 'fk') {
+                            const refRec = getRecord(f.refTable, row[f.name]);
+                            if (refRec) val += ' ' + f.refLabel(refRec).toLowerCase();
+                        }
+                        return val.includes(q);
+                    });
+                });
+            }
+
+            return `
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden fade-in">
+                <!-- Toolbar: Tìm kiếm, Lọc, Nút Thêm mới -->
+                <div class="p-4 sm:p-5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4 bg-slate-50/50">
+                    <div class="flex flex-wrap items-center gap-3 flex-1 min-w-[260px]">
+                        <div class="relative flex-1 max-w-md">
+                            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                                <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                            </span>
+                            <input type="text" value="${searchQuery}" oninput="handleSearch(this.value)"
+                                class="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                                placeholder="Tìm kiếm trong ${tableName}...">
+                        </div>
+
+                        ${statusField ? `
+                        <select onchange="handleFilterStatus(this.value)" class="px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="ALL" ${filterStatus === 'ALL' ? 'selected' : ''}>Tất cả trạng thái</option>
+                            ${statusField.options.map(opt => `<option value="${opt}" ${filterStatus === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+                        </select>
+                        ` : ''}
+                    </div>
+
+                    <button onclick="openModal('${tableName}')" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl shadow-sm transition flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Thêm mới</span>
+                    </button>
+                </div>
+
+                <!-- Bảng dữ liệu Responsive -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                                ${schema.fields.map(f => `<th class="py-3.5 px-4 whitespace-nowrap">${f.label}</th>`).join('')}
+                                <th class="py-3.5 px-4 text-right whitespace-nowrap">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-sm">
+                            ${records.length === 0 ? `
+                                <tr>
+                                    <td colspan="${schema.fields.length + 1}" class="py-12 text-center text-slate-400">
+                                        <i class="fa-solid fa-folder-open text-3xl mb-2 block text-slate-300"></i>
+                                        Không tìm thấy dữ liệu phù hợp trong bảng ${tableName}
+                                    </td>
+                                </tr>
+                            ` : records.map(row => `
+                                <tr class="hover:bg-slate-50/90 transition">
+                                    ${schema.fields.map(f => `<td class="py-3.5 px-4 whitespace-nowrap">${formatCellDisplay(tableName, row, f)}</td>`).join('')}
+                                    <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                                        <div class="inline-flex items-center gap-1.5">
+                                            <button onclick="openModal('${tableName}', '${row[schema.pk]}')" class="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="Chỉnh sửa">
+                                                <i class="fa-solid fa-pen-to-square"></i>
+                                            </button>
+                                            <button onclick="deleteRecord('${tableName}', '${row[schema.pk]}')" class="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition" title="Xóa bản ghi">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Footer thông tin bảng -->
+                <div class="px-5 py-3 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 flex flex-wrap items-center justify-between gap-2">
+                    <span>Hiển thị <strong>${records.length}</strong> / ${db[tableName].length} bản ghi</span>
+                    ${schema.children.length > 0 ? `
+                        <span class="text-amber-700 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200">
+                            <i class="fa-solid fa-shield-halved mr-1"></i>Ràng buộc FK: Đang liên kết tới ${schema.children.map(c => c.table).join(', ')}
+                        </span>
+                    ` : ''}
+                </div>
+            </div>`;
+        }
+
+        function formatCellDisplay(tableName, row, field) {
+            const val = row[field.name];
+            const schema = TABLE_SCHEMAS[tableName];
+
+            // Khóa chính
+            if (field.name === schema.pk) {
+                return `<span class="font-mono font-bold text-xs bg-slate-100 text-slate-800 px-2 py-1 rounded-md border border-slate-200">${val}</span>`;
+            }
+
+            // Khóa ngoại -> Hiển thị tên thực thể liên kết
+            if (field.type === 'fk') {
+                const refRec = getRecord(field.refTable, val);
+                if (refRec) {
+                    return `
+                    <div class="flex flex-col">
+                        <span class="font-medium text-slate-800">${field.refLabel(refRec)}</span>
+                        <span class="text-[11px] font-mono text-indigo-600">FK: ${val}</span>
+                    </div>`;
+                }
+                return `<span class="text-rose-500 font-mono text-xs">${val} (Không tồn tại)</span>`;
+            }
+
+            // Tiền tệ
+            if (field.format === 'currency') {
+                return `<span class="font-semibold ${field.computed ? 'text-emerald-600' : 'text-slate-800'}">${formatMoney(val)}</span>`;
+            }
+
+            // Trạng thái Badge
+            if (field.name === 'TrangThai') {
+                let badge = 'bg-slate-100 text-slate-700';
+                if (['Trống', 'Hiệu lực', 'Hoạt động'].includes(val)) badge = 'bg-emerald-100 text-emerald-700';
+                if (['Đang thuê'].includes(val)) badge = 'bg-indigo-100 text-indigo-700';
+                if (['Bảo trì', 'Chờ duyệt'].includes(val)) badge = 'bg-amber-100 text-amber-700';
+                if (['Đã thanh lý', 'Tạm ngưng'].includes(val)) badge = 'bg-rose-100 text-rose-700';
+                return `<span class="px-2.5 py-1 rounded-full text-xs font-semibold ${badge}">${val}</span>`;
+            }
+
+            // Mật khẩu ẩn bớt
+            if (field.name === 'MatKhau') {
+                return `<span class="font-mono text-slate-400">••••••</span>`;
+            }
+
+            return `<span class="text-slate-700">${val !== undefined && val !== null ? val : ''}</span>`;
+        }
+
+        function handleSearch(val) {
+            searchQuery = val;
+            document.getElementById('content-area').innerHTML = renderTableView(currentRoute);
+            // Giữ focus ở ô tìm kiếm
+            const input = document.querySelector('#content-area input[type="text"]');
+            if (input) {
+                input.focus();
+                input.setSelectionRange(val.length, val.length);
+            }
+        }
+
+        function handleFilterStatus(val) {
+            filterStatus = val;
+            document.getElementById('content-area').innerHTML = renderTableView(currentRoute);
+        }
+
+        /**
+         * 10. MODAL FORM CRUD & LOGIC TỰ ĐỘNG HÓA LIÊN BẢNG
+         */
+        function generateNextId(tableName) {
+            const schema = TABLE_SCHEMAS[tableName];
+            const list = db[tableName] || [];
+            let maxNum = 0;
+            list.forEach(item => {
+                const idStr = String(item[schema.pk] || '');
+                const numPart = parseInt(idStr.replace(/\D/g, ''), 10);
+                if (!isNaN(numPart) && numPart > maxNum) maxNum = numPart;
+            });
+            const nextNum = String(maxNum + 1).padStart(2, '0');
+            return `${schema.prefix}${nextNum}`;
+        }
+
+        function openModal(tableName, pkValue = null) {
+            const schema = TABLE_SCHEMAS[tableName];
+            editingRecordId = pkValue;
+            const existingRecord = pkValue ? getRecord(tableName, pkValue) : null;
+
+            document.getElementById('modal-title').textContent = existingRecord
+                ? `Cập nhật ${tableName} (${pkValue})`
+                : `Thêm mới vào ${tableName}`;
+
+            const fieldsContainer = document.getElementById('form-fields');
+            fieldsContainer.innerHTML = schema.fields.map(f => {
+                const colSpan = f.fullWidth ? 'sm:col-span-2' : '';
+                let val = existingRecord ? existingRecord[f.name] : (f.defaultValue !== undefined ? f.defaultValue : '');
+                
+                if (!existingRecord && f.name === schema.pk) {
+                    val = generateNextId(tableName);
+                }
+                if (!existingRecord && f.type === 'date' && !val) {
+                    val = new Date().toISOString().split('T')[0];
+                }
+
+                const isReadonly = (existingRecord && f.readonlyOnEdit) || f.readonly ? 'readonly bg-slate-100 text-slate-500 cursor-not-allowed' : 'bg-white';
+                const reqAttr = f.required ? 'required' : '';
+
+                // Render Select FK
+                if (f.type === 'fk') {
+                    const refList = db[f.refTable] || [];
+                    return `
+                    <div class="${colSpan}">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">${f.label} ${f.required ? '<span class="text-rose-500">*</span>' : ''}</label>
+                        <select name="${f.name}" id="field-${f.name}" ${reqAttr} onchange="onFormFieldChange('${tableName}', '${f.name}')"
+                            class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                            <option value="">-- Chọn ${f.refTable} --</option>
+                            ${refList.map(r => `<option value="${r[f.refValue]}" ${val === r[f.refValue] ? 'selected' : ''}>${f.refLabel(r)}</option>`).join('')}
+                        </select>
+                    </div>`;
+                }
+
+                // Render Select thường
+                if (f.type === 'select') {
+                    return `
+                    <div class="${colSpan}">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">${f.label} ${f.required ? '<span class="text-rose-500">*</span>' : ''}</label>
+                        <select name="${f.name}" id="field-${f.name}" ${reqAttr}
+                            class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                            ${f.options.map(opt => `<option value="${opt}" ${val === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+                        </select>
+                    </div>`;
+                }
+
+                // Render Textarea
+                if (f.type === 'textarea') {
+                    return `
+                    <div class="${colSpan}">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">${f.label}</label>
+                        <textarea name="${f.name}" id="field-${f.name}" rows="2"
+                            class="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">${val || ''}</textarea>
+                    </div>`;
+                }
+
+                // Render Input thường
+                return `
+                <div class="${colSpan}">
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">${f.label} ${f.required ? '<span class="text-rose-500">*</span>' : ''}</label>
+                    <input type="${f.type}" name="${f.name}" id="field-${f.name}" value="${val}" ${reqAttr} ${isReadonly}
+                        oninput="onFormFieldChange('${tableName}', '${f.name}')"
+                        class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${isReadonly}">
+                </div>`;
+            }).join('');
+
+            // Kích hoạt tính toán tự động ban đầu nếu cần
+            onFormFieldChange(tableName, null);
+
+            const modal = document.getElementById('crud-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('crud-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            editingRecordId = null;
+        }
+
+        /**
+         * Tự động tính toán và đồng bộ dữ liệu liên bảng trên Form
+         */
+        function onFormFieldChange(tableName, changedField) {
+            if (tableName === 'CHI_SO_DIEN') {
+                const soDien = Number(document.getElementById('field-SoDien')?.value || 0);
+                const donGia = Number(document.getElementById('field-DonGia')?.value || 0);
+                const ttEl = document.getElementById('field-ThanhTien');
+                if (ttEl) ttEl.value = soDien * donGia;
+            }
+
+            if (tableName === 'CHI_SO_NUOC') {
+                const soKhoi = Number(document.getElementById('field-SoKhoi')?.value || 0);
+                const donGia = Number(document.getElementById('field-DonGia')?.value || 0);
+                const ttEl = document.getElementById('field-ThanhTien');
+                if (ttEl) ttEl.value = soKhoi * donGia;
+            }
+
+            if (tableName === 'YEU_CAU_DV') {
+                const maDV = document.getElementById('field-MaDV')?.value;
+                const donGiaEl = document.getElementById('field-DonGia');
+                const soLuong = Number(document.getElementById('field-SoLuong')?.value || 0);
+                const ttEl = document.getElementById('field-ThanhTien');
+
+                if (changedField === 'MaDV' && maDV) {
+                    const dv = getRecord('DICH_VU', maDV);
+                    if (dv && donGiaEl) donGiaEl.value = dv.DonGia;
+                }
+                const currentDonGia = Number(donGiaEl?.value || 0);
+                if (ttEl) ttEl.value = soLuong * currentDonGia;
+            }
+
+            // Gợi ý tiền cọc = giá phòng khi chọn phòng lập hợp đồng mới
+            if (tableName === 'HOP_DONG' && changedField === 'MaPhong' && !editingRecordId) {
+                const maPhong = document.getElementById('field-MaPhong')?.value;
+                const phong = getRecord('PHONG', maPhong);
+                const cocEl = document.getElementById('field-TienCoc');
+                if (phong && cocEl && !cocEl.value) {
+                    cocEl.value = phong.GiaThue;
+                }
+            }
+
+            // Gợi ý số tiền thu = giá phòng của hợp đồng khi tạo phiếu thu mới
+            if (tableName === 'PHIEU_THU' && changedField === 'MaHopDong' && !editingRecordId) {
+                const maHD = document.getElementById('field-MaHopDong')?.value;
+                const hd = getRecord('HOP_DONG', maHD);
+                if (hd) {
+                    const phong = getRecord('PHONG', hd.MaPhong);
+                    const soTienEl = document.getElementById('field-SoTien');
+                    if (phong && soTienEl) soTienEl.value = phong.GiaThue;
+                }
+            }
+        }
+
+        /**
+         * Lưu dữ liệu từ Form (Thêm mới / Cập nhật)
+         */
+        document.getElementById('crud-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const schema = TABLE_SCHEMAS[currentRoute];
+            const formData = new FormData(e.target);
+            const record = {};
+
+            schema.fields.forEach(f => {
+                let val = formData.get(f.name);
+                if (f.type === 'number') val = Number(val || 0);
+                record[f.name] = val;
+            });
+
+            // Kiểm tra trùng khóa chính khi thêm mới
+            if (!editingRecordId) {
+                const exists = db[currentRoute].some(item => item[schema.pk] === record[schema.pk]);
+                if (exists) {
+                    showToast(`Mã khóa chính "${record[schema.pk]}" đã tồn tại trong bảng ${currentRoute}!`, 'error');
+                    return;
+                }
+                db[currentRoute].push(record);
+                showToast(`Đã thêm bản ghi ${record[schema.pk]} thành công!`, 'success');
+            } else {
+                const idx = db[currentRoute].findIndex(item => item[schema.pk] === editingRecordId);
+                if (idx !== -1) {
+                    db[currentRoute][idx] = record;
+                    showToast(`Đã cập nhật bản ghi ${editingRecordId}!`, 'success');
+                }
+            }
+
+            // NGHIỆP VỤ TỰ ĐỘNG: Khi lập/cập nhật Hợp đồng có trạng thái 'Hiệu lực' -> Cập nhật Phòng thành 'Đang thuê'
+            if (currentRoute === 'HOP_DONG') {
+                const phongIdx = db.PHONG.findIndex(p => p.MaPhong === record.MaPhong);
+                if (phongIdx !== -1) {
+                    if (record.TrangThai === 'Hiệu lực') {
+                        db.PHONG[phongIdx].TrangThai = 'Đang thuê';
+                        showToast(`Tự động cập nhật Phòng ${db.PHONG[phongIdx].SoPhong} sang trạng thái "Đang thuê"`, 'info');
+                    } else if (record.TrangThai === 'Đã thanh lý') {
+                        db.PHONG[phongIdx].TrangThai = 'Trống';
+                        showToast(`Hợp đồng thanh lý: Phòng ${db.PHONG[phongIdx].SoPhong} đã chuyển về "Trống"`, 'info');
+                    }
+                }
+            }
+
+            saveDB();
+            closeModal();
+            renderCurrentView();
+        });
+
+        /**
+         * 11. KIỂM TRA RÀNG BUỘC KHÓA NGOẠI (FOREIGN KEY CONSTRAINT) KHI XÓA
+         */
+        function deleteRecord(tableName, pkValue) {
+            const schema = TABLE_SCHEMAS[tableName];
+
+            // Ngăn xóa tài khoản đang đăng nhập
+            if (tableName === 'NGUOI_DUNG' && currentUser && currentUser.MaND === pkValue) {
+                showToast('Không thể xóa tài khoản đang đăng nhập!', 'error');
+                return;
+            }
+
+            // Kiểm tra tất cả bảng con có tham chiếu khóa ngoại tới bản ghi này không
+            const blockingRefs = [];
+            schema.children.forEach(child => {
+                const childRecords = db[child.table] || [];
+                const count = childRecords.filter(r => r[child.fk] === pkValue).length;
+                if (count > 0) {
+                    blockingRefs.push(`${count} bản ghi ở bảng ${child.label} (${child.table})`);
+                }
+            });
+
+            if (blockingRefs.length > 0) {
+                showToast(
+                    `Ràng buộc Khóa ngoại: Không thể xóa "${pkValue}" vì đang được tham chiếu bởi ${blockingRefs.join(' và ')}!`,
+                    'error'
+                );
+                return;
+            }
+
+            showConfirm(
+                `Xóa bản ghi ${pkValue}?`,
+                `Bạn có chắc chắn muốn xóa bản ghi "${pkValue}" khỏi bảng ${tableName}? Hành động này không thể hoàn tác.`,
+                () => {
+                    db[tableName] = db[tableName].filter(item => item[schema.pk] !== pkValue);
+                    saveDB();
+                    renderCurrentView();
+                    showToast(`Đã xóa bản ghi ${pkValue} thành công!`, 'success');
+                }
+            );
+        }
+
+        /**
+         * 12. KHỞI CHẠY ỨNG DỤNG KHI TẢI TRANG
+         */
+        window.onload = function() {
+            loadDB();
+            const savedSession = localStorage.getItem(SESSION_KEY);
+            if (savedSession) {
+                try {
+                    const parsed = JSON.parse(savedSession);
+                    const validUser = db.NGUOI_DUNG.find(u => u.MaND === parsed.MaND);
+                    if (validUser) {
+                        currentUser = validUser;
+                        initAppSession();
+                        return;
+                    }
+                } catch (e) {
+                    localStorage.removeItem(SESSION_KEY);
+                }
+            }
+        };
+    </script>
+</body>
+</html>
